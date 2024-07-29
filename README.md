@@ -14,7 +14,7 @@ Encryption Service) API.
 You can install the development version of `rtres` as follows:
 
 ``` r
-remotes::install_github("zorgttp/rtres")
+remotes::install_github("ZorgTTP/rtres")
 ```
 
 ## Features
