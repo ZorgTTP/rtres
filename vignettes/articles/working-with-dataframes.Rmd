@@ -1,0 +1,134 @@
+---
+title: "Working with Data Frames"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+```{r setup}
+library(rtres)
+
+con <- tres_connect(
+  base_url = "https://tres-a.zorgttp.nl/tres",
+  domain = "zorgttp.nl",
+  project = "rtres_test",
+  username = Sys.getenv("TRES_USERNAME"),
+  password = Sys.getenv("TRES_PASSWORD"),
+)
+
+library(tidyverse)
+```
+
+Say we have a data frame (or a tibble, to be precise) containing 87 characters from the Star Wars universe:
+
+```{r}
+starwars
+```
+
+Let's do some encryption on this tibble.
+
+## Encrypt Single Column
+
+```{r}
+starwars_enc <-
+  starwars |>
+  mutate(name = tres_encrypt(name, con))
+starwars_enc
+```
+
+## Extract Search Image
+
+```{r}
+starwars |>
+  mutate(
+    name = tres_encrypt(name, con, search_image = TRUE),
+    name_si = vec_extract_search_image(name)
+  ) |>
+  select(name, name_si)
+```
+
+## Decrypt Single Column
+
+```{r}
+starwars_enc |>
+  mutate(name = tres_decrypt(name, con))
+```
+
+
+## Encrypt Multiple Columns Separately
+
+```{r}
+starwars |>
+  mutate(name = tres_encrypt(name, con),
+         height = tres_encrypt(height, con))
+```
+
+## Encrypt and Decrypt United Columns
+
+```{r}
+starwars_enc <-
+  starwars |>
+  unite("united", mass, height, species) |>
+  select(name, united) |>
+  mutate(united_enc = tres_encrypt(united, con))
+starwars_enc
+```
+
+```{r}
+starwars_enc |>
+  mutate(united_dec = tres_decrypt(united_enc, con)) |>
+  separate_wider_delim(united_dec, delim="_", names=c("mass", "height", "species")) |>
+  mutate(mass = parse_number(mass),
+         height = parse_number(height))
+```
+
+## Encrypt All Columns
+
+We use only the first five rows and three columns to save on bandwidth.
+
+```{r}
+starwars |>
+  head(5) |>
+  select(name, height, mass) |>
+  mutate(across(everything(), ~ tres_encrypt(.x, con), .names="{.col}_enc"))
+```
+
+
+## Encrypt Only Distinct Values
+
+In this tibble, there are only three distinct values for the column `gender`:
+
+```{r}
+distinct(starwars, gender) |>
+  mutate(gender_encrypted = tres_encrypt(gender, con))
+```
+
+Using a combination of `distinct()` and `inner_join()`, we can encrypt the entire column by only passing three values to the API.
+
+```{r}
+starwars |>
+  select(name, gender) |>
+  inner_join(
+    distinct(starwars, gender) |>
+    mutate(gender_encrypted = tres_encrypt(gender, con))
+  )
+```
+
+
+## Encrypt an Entire DataFrame at Once
+
+We use only the first five rows and three columns to save on bandwidth.
+
+```{r}
+starwars |>
+  head(5) |>
+  select(name, height, mass) |>
+  jsonlite::serializeJSON() |>
+  tres_encrypt(con)
+```

@@ -1,0 +1,97 @@
+---
+title: "Get Started"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+## Connect
+
+To interact with the TRES API, you first create a `tres_connection` object using the `tres_connect()` function:
+
+```{r setup}
+library(rtres)
+
+con <- tres_connect(
+  base_url = "https://tres-a.zorgttp.nl/tres",
+  domain = "zorgttp.nl",
+  project = "rtres_test",
+  username = Sys.getenv("TRES_USERNAME"),
+  password = Sys.getenv("TRES_PASSWORD"),
+)
+con
+```
+
+The object `con` can now be used to encrypt and decrypt values.
+
+Required arguments for `tres_connect()` are: `base_url`, `domain`, `project`, `username`, and `password`.
+Optional arguments are: `search_image`, `salted_encryption`, `on_behalf_of_username`, `on_behalf_of_userguid`, `channel`, and `keep_invalid`.
+You can change these, but `search_image` and `salted_encryption` cannot both be `TRUE`:
+
+```{r, error=TRUE}
+con <- tres_connect(
+  base_url = "https://tres-a.zorgttp.nl/tres",
+  domain = "zorgttp.nl",
+  project = "rtres_test",
+  username = Sys.getenv("TRES_USERNAME"),
+  password = Sys.getenv("TRES_PASSWORD"),
+  search_image = TRUE,
+  salted_encryption = TRUE
+)
+```
+
+For security reasons, we recommend against putting your credentials in your script.
+In the previous code snippet, the username and password come from the environment variables `TRES_USERNAME` and `TRES_PASSWORD`. These can be set in the file _.Renviron_ located in your home directory (on macOS and Linux) or your Documents directory (on Windows).
+
+## Encrypt
+
+Use the `tres_encrypt()` function to encrypt values.
+
+```{r}
+input_values <- c("John", " ", "Mary")
+(encrypted_values <- tres_encrypt(input_values, con))
+```
+
+Because TRES cannot work with values containing whitespace only, we get a warning message and the output is `NA`.
+The number in square brackets refers to the value position in the vector.
+The number in parentheses is the error code from the TRES API.
+
+
+## Decrypt
+
+Use the `tres_decrypt()` function to decrypt values.
+
+```{r}
+tres_decrypt(encrypted_values, con)
+```
+
+It's good to know that input values to both `tres_encrypt()` and `tres_decrypt()` are first cast to a character vector.
+Also, the return values of these functions are always character vectors.
+`rtres` can work with `NA` values, in the sense that the output is also `NA`.
+A warning is still displayed.
+
+Out of the box, TRES cannot work with values containing whitespace only.
+See `vignette("preprocessing-values")` for ways to work around this limitation.
+
+
+## Invalid Values
+
+Values that cannot be encrypted or decrypted become `NA` by default.
+You can change this behavior and keep those values in two ways:
+
+* Pass `keep_invalid = TRUE` when creating an `tres_connection` object using `tres_connect()`
+* Pass `keep_invalid = TRUE` when calling either `tres_encrypt()` or `tres_decrypt()`
+
+The latter overrides the former if specified.
+For example:
+
+```{r}
+input_values <- c("John", " ", "Mary")
+tres_encrypt(input_values, con, keep_invalid = TRUE)
+```

@@ -1,0 +1,70 @@
+---
+title: "Preprocessing Values"
+---
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+```{r setup}
+library(rtres)
+
+con <- tres_connect(
+  base_url = "https://tres-a.zorgttp.nl/tres",
+  domain = "zorgttp.nl",
+  project = "rtres_test",
+  username = Sys.getenv("TRES_USERNAME"),
+  password = Sys.getenv("TRES_PASSWORD"),
+)
+```
+
+Out of the box, TRES works only with strings and cannot encrypt or decrypt values containing whitespace only.
+To illustrate these two limitations, let's say you have a bunch of strings and numbers you want to encrypt and decrypt:
+
+```{r}
+strings <- c("Foo", NA, " ")
+numbers <- c(3.1415, 42, 1337)
+
+strings |> tres_encrypt(con) |> tres_decrypt(con)
+numbers |> tres_encrypt(con) |> tres_decrypt(con)
+```
+
+You get four warnings in total, two while encrypting and two while decrypting.
+
+Luckily, there are ways around this.
+`rtres` offers several functions for sanitizing input and output.
+This allows you to encrypt and decrypt complicated data types.
+These function are (ordered by their flexibility and cost):
+
+* `vec_wrap()` and `vec_unwrap()` for working with values only containing whitespace (cheap but fairly limited)
+* `vec_jsonify()` and `vec_unjsonify()` for working with complex data types in a interoperable way (somewhat cheap and more flexible)
+* `vec_serialize()` and `vec_unserialize()` for working with complex data types in an R-native way (expensive but very flexible)
+
+Let's apply `vec_wrap()` to our strings and `vec_jsonify()` to our numbers.
+Also, let's apply `vec_serialize()` to an object of type `POSIXct` to demonstrate that this function preserves R object types.
+
+```{r}
+strings <- c("Foo", NA, " ")
+numbers <- c(3.1415, 42, 1337)
+
+strings |> vec_wrap() |> tres_encrypt(con) |> tres_decrypt(con) |> vec_unwrap()
+numbers |> vec_jsonify() |> tres_encrypt(con) |> tres_decrypt(con) |> vec_unjsonify()
+lubridate::now() |>
+  vec_serialize() |>
+  tres_encrypt(con) |>
+  tres_decrypt(con) |>
+  vec_unserialize() |>
+  str()
+```
+
+
+Other helpful functions from other packages include:
+
+* `readr::parse_number()` and other `readr::parse_*()` functions allow you to convert strings back into their original data type.
+* `jsonlite::serializeJSON()` (and its complement `jsonlite::unserializeJSON()`) allow you to turn complex data structures (such as lists) into a single character vector.

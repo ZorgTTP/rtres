@@ -1,0 +1,25 @@
+Package: rtres
+Title: Interact with the TRES (Trusted Reversible Encryption Service) API
+Version: 2.0.0.9000
+Authors@R: 
+    person(given = "ZorgTTP",
+           role = c("aut", "cre", "cph"),
+           email = "info@zorgttp.nl")
+Description: This library contains functions to directly use ZorgTTPs TRES API,
+  without the need to understand the REST API.
+License: MIT + file LICENSE
+Imports:
+    httr2,
+    jsonlite,
+    stringr,
+    purrr,
+    cli,
+    rlang (>= 1.1.0)
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Config/Needs/website: rmarkdown

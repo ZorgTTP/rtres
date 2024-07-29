@@ -1,0 +1,8 @@
+url: ~
+template:
+  bootswatch: cosmo
+  bootstrap: 5
+
+authors:
+  ZorgTTP:
+    href: https://www.zorgttp.nl/

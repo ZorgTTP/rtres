@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.idea/*
+docs
+tests/testthat/testthat-problems.rds
