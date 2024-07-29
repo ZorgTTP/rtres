@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
 You can install the development version of `rtres` as follows:
 
 ```{r, eval=FALSE}
-remotes::install_github("zorgttp/rtres")
+remotes::install_github("ZorgTTP/rtres")
 ```
 
 
